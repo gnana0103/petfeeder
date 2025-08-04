@@ -1,0 +1,45 @@
+#define BLYNK_TEMPLATE_ID "TMPL3R-N6Tmyq"
+#define BLYNK_TEMPLATE_NAME "Pet Feeder"
+#define BLYNK_AUTH_TOKEN "hsKIVW_bd9wbtI9AwbRL2eknrkIR49JP"
+
+#include <WiFi.h>
+#include <BlynkSimpleEsp32.h>
+#include <ESP32Servo.h>  // ✅ Correct library for ESP32
+
+// WiFi credentials
+char ssid[] = "project12";
+char pass[] = "12345678";
+
+Servo myServo;
+int servoPin = 13;
+
+void setup()
+{
+  Serial.begin(115200);
+
+  myServo.attach(servoPin); // Attach servo to GPIO 13
+  myServo.write(0);         // Initial position
+
+  Blynk.begin(BLYNK_AUTH_TOKEN, ssid, pass);
+}
+
+BLYNK_WRITE(V0)
+{
+  int value = param.asInt(); // 0 = OFF, 1 = ON
+
+  if (value == 1)
+  {
+    myServo.write(45); // Rotate to 45 degrees
+    Serial.println("Servo Opened to 45°");
+  delay(1000);
+  value=0;
+    myServo.write(0);  // Return to 0 degrees
+    Serial.println("Servo Closed to 0°");
+    Blynk.virtualWrite(V0,0);
+  }
+}
+
+void loop()
+{
+  Blynk.run();
+}
