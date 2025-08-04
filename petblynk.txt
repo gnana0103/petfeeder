@@ -1,0 +1,106 @@
+#include <WiFi.h>
+#include <ESP32Servo.h>
+#include <BlynkSimpleEsp32.h>
+#include <time.h>
+
+// ====== WiFi Credentials ======
+char ssid[] = "YOUR_WIFI_NAME";
+char pass[] = "YOUR_WIFI_PASSWORD";
+
+// ====== Blynk Auth Token ======
+char auth[] = "YOUR_BLYNK_TEMPLATE_AUTH_TOKEN";
+
+// ====== NTP Settings ======
+const char* ntpServer = "pool.ntp.org";
+const long gmtOffset_sec = 19800;  // For India: GMT+5:30
+const int daylightOffset_sec = 0;
+
+// ====== Feeding Time Variables ======
+int feedHour = 8;
+int feedMinute = 0;
+bool hasFed = false;
+bool manualFeed = false;
+
+// ====== Servo Setup ======
+Servo feederServo;
+int servoPin = 18;
+
+// ====== Blynk Timer ======
+BlynkTimer timer;
+
+// === Datastream handlers ===
+BLYNK_WRITE(V0) {
+  feedHour = param.asInt();
+}
+BLYNK_WRITE(V1) {
+  feedMinute = param.asInt();
+}
+BLYNK_WRITE(V2) {
+  manualFeed = true;
+}
+
+// ====== Feeding Function ======
+void feedNow() {
+  Serial.println("Feeding...");
+  feederServo.write(90); // Open feeder
+  delay(5000);           // Wait for food to drop
+  feederServo.write(0);  // Close feeder
+}
+
+// ====== Time Check Loop ======
+void checkFeedingTime() {
+  struct tm timeinfo;
+  if (!getLocalTime(&timeinfo)) {
+    Serial.println("Failed to get time.");
+    return;
+  }
+
+  int currentHour = timeinfo.tm_hour;
+  int currentMinute = timeinfo.tm_min;
+
+  Serial.printf("Current Time: %02d:%02d\n", currentHour, currentMinute);
+
+  if (currentHour == feedHour && currentMinute == feedMinute && !hasFed) {
+    feedNow();
+    hasFed = true;
+  }
+
+  // Reset flag if minute changed
+  if (currentMinute != feedMinute) {
+    hasFed = false;
+  }
+
+  // Manual feed trigger
+  if (manualFeed) {
+    feedNow();
+    manualFeed = false;
+  }
+}
+
+void setup() {
+  Serial.begin(115200);
+
+  feederServo.attach(servoPin);
+  feederServo.write(0);  // Closed position
+
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\nWiFi connected.");
+
+  configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
+
+  Blynk.begin(auth, ssid, pass);
+
+  timer.setInterval(1000L, checkFeedingTime); // Check every second
+}
+
+void loop() {
+  Blynk.run();
+  timer.run();
+}
+
+
+---
