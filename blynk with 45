@@ -1,14 +1,14 @@
-#define BLYNK_TEMPLATE_ID "TMPL3R-N6Tmyq"
+#define BLYNK_TEMPLATE_ID " "
 #define BLYNK_TEMPLATE_NAME "Pet Feeder"
-#define BLYNK_AUTH_TOKEN "hsKIVW_bd9wbtI9AwbRL2eknrkIR49JP"
+#define BLYNK_AUTH_TOKEN " " 
 
 #include <WiFi.h>
 #include <BlynkSimpleEsp32.h>
 #include <ESP32Servo.h>  // ✅ Correct library for ESP32
 
 // WiFi credentials
-char ssid[] = "project12";
-char pass[] = "12345678";
+char ssid[] = " ";
+char pass[] = "  ";
 
 Servo myServo;
 int servoPin = 13;
